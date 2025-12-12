@@ -8,7 +8,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  Grid,
   FormControl,
   Select,
   MenuItem
@@ -35,12 +34,7 @@ const Promotions = () => {
 
   const { promotions, loading } = useSelector(state => state.promotions);
 
-  useEffect(() => {
-    if (user) {
-      loadPromotions();
-    }
-  }, [user, filters]);
-
+  /** FIXED: loadPromotions must be declared BEFORE useEffect and must be stable */
   const loadPromotions = useCallback(() => {
     const userId = user?.id ? user.id.toString() : 'test_user_123';
     dispatch(fetchPromotions({
@@ -49,13 +43,19 @@ const Promotions = () => {
     }));
   }, [user, filters, dispatch]);
 
+  /** FIXED useEffect dependency */
+  useEffect(() => {
+    if (user) {
+      loadPromotions();
+    }
+  }, [user, filters, loadPromotions]);
+
   const handleTabChange = (event, newValue) => {
     hapticFeedback?.impactOccurred('light');
     setTabValue(newValue);
     
     let statusFilter = '';
     switch (newValue) {
-      case 0: statusFilter = ''; break;
       case 1: statusFilter = 'active'; break;
       case 2: statusFilter = 'planned'; break;
       case 3: statusFilter = 'completed'; break;
@@ -94,9 +94,7 @@ const Promotions = () => {
   return (
     <Box sx={{ p: 1 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
-          Promotions
-        </Typography>
+        <Typography variant="h6">Promotions</Typography>
         <Button
           variant="contained"
           size="small"
@@ -144,11 +142,7 @@ const Promotions = () => {
           <Typography variant="caption">Loading promotions...</Typography>
         </Paper>
       ) : (
-        <PromotionList
-          promotions={promotions}
-          compact
-          showPagination={false}
-        />
+        <PromotionList promotions={promotions} compact showPagination={false} />
       )}
 
       {/* Promotion Form Dialog */}
@@ -159,10 +153,7 @@ const Promotions = () => {
         maxWidth="sm"
       >
         <DialogContent sx={{ p: 2 }}>
-          <PromotionForm
-            onSuccess={handlePromotionSuccess}
-            compact
-          />
+          <PromotionForm onSuccess={handlePromotionSuccess} compact />
         </DialogContent>
       </Dialog>
     </Box>

@@ -15,7 +15,6 @@ import {
   Campaign,
   Schedule,
   AttachMoney,
-  CalendarToday
 } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTransactions } from '../store/slices/transactionSlice';

@@ -7,7 +7,6 @@ import {
   Card,
   CardContent,
   Switch,
-  FormControlLabel,
   Button,
   Divider,
   List,
@@ -102,11 +101,7 @@ const Settings = () => {
                     primary={item.label}
                     primaryTypographyProps={{ variant: 'body2' }}
                   />
-                  <Switch
-                    size="small"
-                    checked={item.enabled}
-                    onChange={() => {}}
-                  />
+                  <Switch size="small" checked={item.enabled} onChange={() => {}} />
                 </ListItem>
                 {itemIndex < section.items.length - 1 && <Divider />}
               </React.Fragment>

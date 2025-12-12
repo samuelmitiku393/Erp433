@@ -35,12 +35,7 @@ const Finance = () => {
 
   const { transactions, loading } = useSelector(state => state.transactions);
 
-  useEffect(() => {
-    if (user) {
-      loadTransactions();
-    }
-  }, [user, filters]);
-
+  // Memoized loadTransactions function
   const loadTransactions = useCallback(() => {
     const userId = user?.id ? user.id.toString() : 'test_user_123';
     dispatch(fetchTransactions({
@@ -48,6 +43,13 @@ const Finance = () => {
       ...filters
     }));
   }, [user, filters, dispatch]);
+
+  // useEffect now includes loadTransactions in dependency array
+  useEffect(() => {
+    if (user) {
+      loadTransactions();
+    }
+  }, [user, filters, loadTransactions]);
 
   const handleTabChange = (event, newValue) => {
     hapticFeedback?.impactOccurred('light');
