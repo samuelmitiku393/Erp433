@@ -40,28 +40,28 @@ const Analytics = () => {
   ];
 
   return (
-    <Box sx={{ p: 2 }}>
-      <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+    <Box sx={{ p: 1 }}>
+      <Typography variant="h6" gutterBottom sx={{ mb: 2, fontSize: '1.1rem' }}>
         Analytics Dashboard
       </Typography>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         {stats.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <Grid item xs={6} sm={3} key={index}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent sx={{ p: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Box sx={{ mr: 1 }}>
                     {stat.icon}
                   </Box>
-                  <Typography color="textSecondary" variant="body2">
+                  <Typography color="textSecondary" variant="caption" sx={{ fontSize: '0.75rem' }}>
                     {stat.title}
                   </Typography>
                 </Box>
-                <Typography variant="h4" sx={{ mb: 1 }}>
+                <Typography variant="h6" sx={{ mb: 0.5, fontSize: '1.25rem' }}>
                   {stat.value}
                 </Typography>
-                <Typography variant="body2" color="success.main">
+                <Typography variant="caption" color="success.main" sx={{ fontSize: '0.75rem' }}>
                   {stat.change} {stat.period}
                 </Typography>
               </CardContent>
@@ -70,62 +70,21 @@ const Analytics = () => {
         ))}
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Paper sx={{ p: 2, minHeight: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Box sx={{ textAlign: 'center' }}>
-              <AnalyticsIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Revenue Chart
+              <AnalyticsIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+              <Typography variant="subtitle1" gutterBottom>
+                Revenue Analytics
               </Typography>
-              <Typography color="textSecondary">
-                Detailed revenue analytics coming soon
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <PieChartIcon sx={{ fontSize: 60, color: 'secondary.main', mb: 2 }} />
-              <Typography variant="h6" gutterBottom>
-                Performance Metrics
-              </Typography>
-              <Typography color="textSecondary">
-                Campaign performance analytics coming soon
+              <Typography variant="caption" color="textSecondary">
+                Detailed analytics coming soon
               </Typography>
             </Box>
           </Paper>
         </Grid>
       </Grid>
-
-      <Paper sx={{ p: 3, mt: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Coming Soon Features
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="subtitle2">Advanced Charts</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="subtitle2">Export Reports</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="subtitle2">Predictive Analytics</Typography>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Paper sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="subtitle2">Custom Dashboards</Typography>
-            </Paper>
-          </Grid>
-        </Grid>
-      </Paper>
     </Box>
   );
 };
