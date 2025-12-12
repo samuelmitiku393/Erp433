@@ -2,6 +2,10 @@
   "name": "telegram-erp-frontend",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=18 <19",
+    "npm": ">=8"
+  },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
