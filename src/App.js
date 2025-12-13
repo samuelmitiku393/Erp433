@@ -4,9 +4,6 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
@@ -17,7 +14,7 @@ import Settings from './pages/Settings';
 import useTelegram from './hooks/useTelegram';
 
 const App = () => {
-  const { theme: telegramTheme, isLoading } = useTelegram();
+  const { theme: telegramTheme } = useTelegram();
 
   const theme = createTheme({
     palette: {
@@ -67,26 +64,6 @@ const App = () => {
       },
     },
   });
-
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          bgcolor: theme.palette.background.default,
-        }}
-      >
-        <CircularProgress size={36} />
-        <Typography mt={2} fontSize="0.9rem">
-          Loading…
-        </Typography>
-      </Box>
-    );
-  }
 
   return (
     <ThemeProvider theme={theme}>

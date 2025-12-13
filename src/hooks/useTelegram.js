@@ -3,85 +3,52 @@ import { useEffect, useState } from 'react';
 const useTelegram = () => {
   const [webApp, setWebApp] = useState(null);
   const [user, setUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    let checkTelegram;
+    const tg = window.Telegram?.WebApp;
 
-    const initTelegram = () => {
-      const tg = window.Telegram?.WebApp;
-      if (!tg) return;
+    if (!tg) {
+      console.warn('Telegram WebApp not found, running in browser mode');
+      return;
+    }
 
+    try {
       tg.ready();
       tg.expand();
-      tg.enableClosingConfirmation();
 
-      document.body.className = `tg-theme-${tg.colorScheme || 'default'}`;
+      setTheme(tg.colorScheme || 'light');
+      setUser(tg.initDataUnsafe?.user || null);
+      setWebApp(tg);
 
-      const userData = tg.initDataUnsafe?.user || null;
+      document.body.className = `tg-theme-${tg.colorScheme || 'light'}`;
 
-      if (tg.BackButton?.onClick) {
+      tg.onEvent('themeChanged', () => {
+        setTheme(tg.colorScheme || 'light');
+        document.body.className = `tg-theme-${tg.colorScheme || 'light'}`;
+      });
+
+      if (tg.BackButton) {
         tg.BackButton.onClick(() => {
           if (window.history.length > 1) window.history.back();
           else tg.close();
         });
       }
 
-      if (tg.MainButton?.setText && tg.MainButton?.onClick) {
-        tg.MainButton.setText('Save');
-        tg.MainButton.onClick(() => {
-          tg.showPopup({
-            title: 'Action',
-            message: 'Main button clicked!',
-            buttons: [{ type: 'ok' }]
-          });
-        });
-      }
-
-      setWebApp(tg);
-      setUser(userData);
-      setIsLoading(false);
-
-      tg.onEvent('themeChanged', () => {
-        document.body.className = `tg-theme-${tg.colorScheme || 'default'}`;
-      });
-
-      console.log('Telegram WebApp initialized:', userData);
-    };
-
-    if (window.Telegram?.WebApp) {
-      initTelegram();
-    } else {
-      checkTelegram = setInterval(() => {
-        if (window.Telegram?.WebApp) {
-          clearInterval(checkTelegram);
-          initTelegram();
-        }
-      }, 100);
-
-      setTimeout(() => {
-        clearInterval(checkTelegram);
-        if (!window.Telegram?.WebApp) {
-          console.error('❌ Telegram WebApp SDK not loaded');
-          setIsLoading(false);
-        }
-      }, 3000);
+      console.log('✅ Telegram WebApp ready');
+    } catch (err) {
+      console.error('Telegram init error:', err);
     }
-
-    return () => clearInterval(checkTelegram);
   }, []);
 
   return {
     webApp,
     user,
-    isLoading,
-    initData: webApp?.initData,
-    initDataUnsafe: webApp?.initDataUnsafe,
+    theme,
     sendData: (data) => webApp?.sendData(JSON.stringify(data)),
     close: () => webApp?.close(),
-    showAlert: (message) => webApp?.showAlert(message),
-    showConfirm: (message, callback) => webApp?.showConfirm(message, callback),
-    hapticFeedback: webApp?.HapticFeedback
+    showAlert: (msg) => webApp?.showAlert(msg),
+    hapticFeedback: webApp?.HapticFeedback,
   };
 };
 
