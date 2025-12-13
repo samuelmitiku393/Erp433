@@ -29,130 +29,66 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, hapticFeedback } = useTelegram();
 
-  const {
-    transactions = [],
-    summary = {},
-    loading: financeLoading
-  } = useSelector(state => state.transactions) || {};
+  // FIXED: Get Redux state once and memoize the derived values
+  const transactionsState = useSelector(state => state.transactions);
+  const promotionsState = useSelector(state => state.promotions);
 
-  const {
-    promotions = [],
-    activePromotions = [],
-    loading: promoLoading
-  } = useSelector(state => state.promotions) || {};
+  // Memoize the extracted values to prevent new references on every render
+  const { transactions, summary, financeLoading } = useMemo(() => ({
+    transactions: transactionsState?.transactions || [],
+    summary: transactionsState?.summary || {},
+    financeLoading: transactionsState?.loading || false
+  }), [transactionsState]);
 
-  // Add safe data access
-  const safeSummary = summary || {};
-  const safeTransactions = transactions || [];
-  const safePromotions = promotions || [];
-  const safeActivePromotions = activePromotions || [];
+  const { promotions, activePromotions, promoLoading } = useMemo(() => ({
+    promotions: promotionsState?.promotions || [],
+    activePromotions: promotionsState?.activePromotions || [],
+    promoLoading: promotionsState?.loading || false
+  }), [promotionsState]);
 
   useEffect(() => {
-    if (!user?.id) {
-      console.log('No user ID available, skipping data fetch');
-      return;
-    }
+    if (!user?.id) return;
     const userId = String(user.id);
-    console.log('Fetching data for user:', userId);
     dispatch(fetchTransactions({ userId, limit: 5 }));
     dispatch(fetchPromotions({ userId, limit: 4 }));
   }, [dispatch, user]);
 
-  const stats = useMemo(() => [
-    {
-      title: 'Income',
-      value: `$${(safeSummary.totalIncome || 0).toFixed(2)}`,
-      icon: <TrendingUp sx={{ color: 'success.main' }} />,
-    },
-    {
-      title: 'Expenses',
-      value: `$${(safeSummary.totalExpenses || 0).toFixed(2)}`,
-      icon: <TrendingDown sx={{ color: 'error.main' }} />,
-    },
-    {
-      title: 'Promotions',
-      value: safeActivePromotions.length,
-      icon: <Campaign sx={{ color: 'primary.main' }} />,
-    },
-    {
-      title: 'Scheduled Posts',
-      value: safePromotions.reduce(
-        (total, promo) => total + (promo.reminders?.length || 0),
-        0
-      ),
-      icon: <Schedule sx={{ color: 'warning.main' }} />,
-    }
-  ], [safeSummary, safeActivePromotions, safePromotions]);
+  // FIXED: Move calculations inside useMemo to use stable dependencies
+  const stats = useMemo(() => {
+    // Calculate scheduled posts count safely
+    const scheduledPostsCount = promotions?.reduce?.(
+      (total, promo) => total + (promo?.reminders?.length || 0),
+      0
+    ) || 0;
+
+    return [
+      {
+        title: 'Income',
+        value: `$${(summary?.totalIncome || 0).toFixed(2)}`,
+        icon: <TrendingUp sx={{ color: 'success.main' }} />,
+      },
+      {
+        title: 'Expenses',
+        value: `$${(summary?.totalExpenses || 0).toFixed(2)}`,
+        icon: <TrendingDown sx={{ color: 'error.main' }} />,
+      },
+      {
+        title: 'Promotions',
+        value: activePromotions?.length || 0,
+        icon: <Campaign sx={{ color: 'primary.main' }} />,
+      },
+      {
+        title: 'Scheduled Posts',
+        value: scheduledPostsCount,
+        icon: <Schedule sx={{ color: 'warning.main' }} />,
+      }
+    ];
+  }, [summary, activePromotions, promotions]);
 
   const handleNavigate = useCallback((path) => {
-    // Safe haptic feedback with fallback
-    try {
-      hapticFeedback?.impactOccurred?.('light');
-    } catch (error) {
-      console.log('Haptic feedback not available');
-    }
+    hapticFeedback?.impactOccurred?.('light');
     navigate(path);
   }, [navigate, hapticFeedback]);
-
-  // Add loading state for initial user check
-  const [isInitializing, setIsInitializing] = React.useState(true);
-
-  useEffect(() => {
-    // Set a timeout to show loading state briefly
-    const timer = setTimeout(() => {
-      setIsInitializing(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Show loading skeleton if still initializing
-  if (isInitializing) {
-    return (
-      <Box sx={{ p: 1 }}>
-        <Typography fontSize="1rem" fontWeight={600} mb={1.5}>
-          Business Dashboard
-        </Typography>
-        
-        <Grid container spacing={1.5} mb={2}>
-          {[1, 2, 3, 4].map((i) => (
-            <Grid item xs={6} key={i}>
-              <Skeleton variant="rectangular" height={70} />
-            </Grid>
-          ))}
-        </Grid>
-        
-        <Skeleton variant="rectangular" height={50} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={80} sx={{ mb: 2 }} />
-        <Skeleton variant="rectangular" height={80} />
-      </Box>
-    );
-  }
-
-  // Show message if no user is available
-  if (!user?.id) {
-    return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography variant="h6" color="textSecondary" gutterBottom>
-          User not authenticated
-        </Typography>
-        <Typography variant="body2" color="textSecondary">
-          Please open this app from Telegram to access your dashboard.
-        </Typography>
-        {/* Optional: Add demo mode button */}
-        <Button 
-          variant="outlined" 
-          sx={{ mt: 2 }}
-          onClick={() => {
-            // For testing purposes, you could set a demo user
-            console.log('Demo mode activated');
-          }}
-        >
-          Try Demo Mode
-        </Button>
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ p: 1 }}>
@@ -213,8 +149,8 @@ const Dashboard = () => {
         </Typography>
         {financeLoading ? (
           <Skeleton height={80} />
-        ) : safeTransactions.length > 0 ? (
-          <TransactionList transactions={safeTransactions.slice(0, 3)} compact />
+        ) : transactions.length > 0 ? (
+          <TransactionList transactions={transactions.slice(0, 3)} compact />
         ) : (
           <Typography color="textSecondary" fontSize="0.8rem">
             No transactions yet
@@ -228,8 +164,8 @@ const Dashboard = () => {
         </Typography>
         {promoLoading ? (
           <Skeleton height={80} />
-        ) : safeActivePromotions.length > 0 ? (
-          <PromotionList promotions={safeActivePromotions.slice(0, 2)} compact />
+        ) : activePromotions.length > 0 ? (
+          <PromotionList promotions={activePromotions.slice(0, 2)} compact />
         ) : (
           <Typography color="textSecondary" fontSize="0.8rem">
             No active promotions
