@@ -28,14 +28,15 @@ const useTelegram = () => {
         document.body.className = `tg-theme-${tg.colorScheme || 'light'}`;
       });
 
-      if (tg.BackButton) {
+      // Check if BackButton exists before using it
+      if (tg.BackButton && tg.BackButton.isVisible) {
         tg.BackButton.onClick(() => {
           if (window.history.length > 1) window.history.back();
           else tg.close();
         });
       }
 
-      console.log('✅ Telegram WebApp ready');
+      console.log('✅ Telegram WebApp ready:', tg);
     } catch (err) {
       console.error('Telegram init error:', err);
     }
@@ -45,11 +46,10 @@ const useTelegram = () => {
     webApp,
     user,
     theme,
-    sendData: (data) => webApp?.sendData(JSON.stringify(data)),
-    close: () => webApp?.close(),
-    showAlert: (msg) => webApp?.showAlert(msg),
+    sendData: (data) => webApp?.sendData?.(JSON.stringify(data)),
+    close: () => webApp?.close?.(),
+    showAlert: (msg) => webApp?.showAlert?.(msg),
     hapticFeedback: webApp?.HapticFeedback,
   };
 };
-
 export default useTelegram;

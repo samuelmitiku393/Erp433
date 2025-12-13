@@ -33,17 +33,27 @@ const Dashboard = () => {
     transactions = [],
     summary = {},
     loading: financeLoading
-  } = useSelector(state => state.transactions);
+  } = useSelector(state => state.transactions) || {};
 
   const {
     promotions = [],
     activePromotions = [],
     loading: promoLoading
-  } = useSelector(state => state.promotions);
+  } = useSelector(state => state.promotions) || {};
+
+  // Add safe data access
+  const safeSummary = summary || {};
+  const safeTransactions = transactions || [];
+  const safePromotions = promotions || [];
+  const safeActivePromotions = activePromotions || [];
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('No user ID available, skipping data fetch');
+      return;
+    }
     const userId = String(user.id);
+    console.log('Fetching data for user:', userId);
     dispatch(fetchTransactions({ userId, limit: 5 }));
     dispatch(fetchPromotions({ userId, limit: 4 }));
   }, [dispatch, user]);
@@ -51,33 +61,98 @@ const Dashboard = () => {
   const stats = useMemo(() => [
     {
       title: 'Income',
-      value: `$${(summary.totalIncome || 0).toFixed(2)}`,
+      value: `$${(safeSummary.totalIncome || 0).toFixed(2)}`,
       icon: <TrendingUp sx={{ color: 'success.main' }} />,
     },
     {
       title: 'Expenses',
-      value: `$${(summary.totalExpenses || 0).toFixed(2)}`,
+      value: `$${(safeSummary.totalExpenses || 0).toFixed(2)}`,
       icon: <TrendingDown sx={{ color: 'error.main' }} />,
     },
     {
       title: 'Promotions',
-      value: activePromotions.length,
+      value: safeActivePromotions.length,
       icon: <Campaign sx={{ color: 'primary.main' }} />,
     },
     {
       title: 'Scheduled Posts',
-      value: promotions.reduce(
+      value: safePromotions.reduce(
         (total, promo) => total + (promo.reminders?.length || 0),
         0
       ),
       icon: <Schedule sx={{ color: 'warning.main' }} />,
     }
-  ], [summary, activePromotions, promotions]);
+  ], [safeSummary, safeActivePromotions, safePromotions]);
 
   const handleNavigate = useCallback((path) => {
-    hapticFeedback?.impactOccurred('light');
+    // Safe haptic feedback with fallback
+    try {
+      hapticFeedback?.impactOccurred?.('light');
+    } catch (error) {
+      console.log('Haptic feedback not available');
+    }
     navigate(path);
   }, [navigate, hapticFeedback]);
+
+  // Add loading state for initial user check
+  const [isInitializing, setIsInitializing] = React.useState(true);
+
+  useEffect(() => {
+    // Set a timeout to show loading state briefly
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading skeleton if still initializing
+  if (isInitializing) {
+    return (
+      <Box sx={{ p: 1 }}>
+        <Typography fontSize="1rem" fontWeight={600} mb={1.5}>
+          Business Dashboard
+        </Typography>
+        
+        <Grid container spacing={1.5} mb={2}>
+          {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={6} key={i}>
+              <Skeleton variant="rectangular" height={70} />
+            </Grid>
+          ))}
+        </Grid>
+        
+        <Skeleton variant="rectangular" height={50} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={80} sx={{ mb: 2 }} />
+        <Skeleton variant="rectangular" height={80} />
+      </Box>
+    );
+  }
+
+  // Show message if no user is available
+  if (!user?.id) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="textSecondary" gutterBottom>
+          User not authenticated
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Please open this app from Telegram to access your dashboard.
+        </Typography>
+        {/* Optional: Add demo mode button */}
+        <Button 
+          variant="outlined" 
+          sx={{ mt: 2 }}
+          onClick={() => {
+            // For testing purposes, you could set a demo user
+            console.log('Demo mode activated');
+          }}
+        >
+          Try Demo Mode
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 1 }}>
@@ -138,8 +213,12 @@ const Dashboard = () => {
         </Typography>
         {financeLoading ? (
           <Skeleton height={80} />
+        ) : safeTransactions.length > 0 ? (
+          <TransactionList transactions={safeTransactions.slice(0, 3)} compact />
         ) : (
-          <TransactionList transactions={transactions.slice(0, 3)} compact />
+          <Typography color="textSecondary" fontSize="0.8rem">
+            No transactions yet
+          </Typography>
         )}
       </Box>
 
@@ -149,8 +228,12 @@ const Dashboard = () => {
         </Typography>
         {promoLoading ? (
           <Skeleton height={80} />
+        ) : safeActivePromotions.length > 0 ? (
+          <PromotionList promotions={safeActivePromotions.slice(0, 2)} compact />
         ) : (
-          <PromotionList promotions={activePromotions.slice(0, 2)} compact />
+          <Typography color="textSecondary" fontSize="0.8rem">
+            No active promotions
+          </Typography>
         )}
       </Box>
     </Box>
