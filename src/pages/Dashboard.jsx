@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import {
   Grid,
   Paper,
@@ -28,99 +28,75 @@ const Dashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, hapticFeedback } = useTelegram();
-  
-  const { transactions, summary, loading: financeLoading } = useSelector(state => state.transactions);
-  const { promotions, activePromotions, loading: promoLoading } = useSelector(state => state.promotions);
+
+  const {
+    transactions = [],
+    summary = {},
+    loading: financeLoading
+  } = useSelector(state => state.transactions);
+
+  const {
+    promotions = [],
+    activePromotions = [],
+    loading: promoLoading
+  } = useSelector(state => state.promotions);
 
   useEffect(() => {
-    if (user) {
-      const userId = user.id ? user.id.toString() : 'test_user_123';
-      
-      dispatch(fetchTransactions({
-        userId,
-        limit: 5
-      }));
-      
-      dispatch(fetchPromotions({
-        userId,
-        limit: 4
-      }));
-    }
+    if (!user?.id) return;
+    const userId = String(user.id);
+    dispatch(fetchTransactions({ userId, limit: 5 }));
+    dispatch(fetchPromotions({ userId, limit: 4 }));
   }, [dispatch, user]);
 
   const stats = useMemo(() => [
     {
-      title: 'Total Income',
-      value: `$${summary?.totalIncome?.toFixed(2) || '0.00'}`,
-      icon: <TrendingUp sx={{ color: 'success.main', fontSize: 24 }} />,
-      color: 'success'
+      title: 'Income',
+      value: `$${(summary.totalIncome || 0).toFixed(2)}`,
+      icon: <TrendingUp sx={{ color: 'success.main' }} />,
     },
     {
-      title: 'Total Expenses',
-      value: `$${summary?.totalExpenses?.toFixed(2) || '0.00'}`,
-      icon: <TrendingDown sx={{ color: 'error.main', fontSize: 24 }} />,
-      color: 'error'
+      title: 'Expenses',
+      value: `$${(summary.totalExpenses || 0).toFixed(2)}`,
+      icon: <TrendingDown sx={{ color: 'error.main' }} />,
     },
     {
-      title: 'Active Promos',
+      title: 'Promotions',
       value: activePromotions.length,
-      icon: <Campaign sx={{ color: 'primary.main', fontSize: 24 }} />,
-      color: 'primary'
+      icon: <Campaign sx={{ color: 'primary.main' }} />,
     },
     {
-      title: 'Upcoming Posts',
-      value: promotions.reduce((total, promo) => 
-        total + (promo.reminders?.length || 0), 0
+      title: 'Scheduled Posts',
+      value: promotions.reduce(
+        (total, promo) => total + (promo.reminders?.length || 0),
+        0
       ),
-      icon: <Schedule sx={{ color: 'warning.main', fontSize: 24 }} />,
-      color: 'warning'
+      icon: <Schedule sx={{ color: 'warning.main' }} />,
     }
   ], [summary, activePromotions, promotions]);
 
-  const loading = financeLoading || promoLoading;
-
-  if (loading) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Skeleton variant="text" width="60%" height={40} sx={{ mb: 3 }} />
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          {[1, 2, 3, 4].map(i => (
-            <Grid item xs={6} sm={3} key={i}>
-              <Skeleton variant="rectangular" height={100} />
-            </Grid>
-          ))}
-        </Grid>
-        <Skeleton variant="rectangular" height={200} />
-      </Box>
-    );
-  }
-
-  const handleNavigation = (path) => {
+  const handleNavigate = useCallback((path) => {
     hapticFeedback?.impactOccurred('light');
     navigate(path);
-  };
+  }, [navigate, hapticFeedback]);
 
   return (
     <Box sx={{ p: 1 }}>
-      <Typography variant="h6" gutterBottom sx={{ mb: 2, fontSize: '1.1rem' }}>
+      <Typography fontSize="1rem" fontWeight={600} mb={1.5}>
         Business Dashboard
       </Typography>
-      
-      {/* Stats Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {stats.map((stat, index) => (
-          <Grid item xs={6} key={index}>
-            <Card sx={{ height: '100%' }}>
+
+      <Grid container spacing={1.5} mb={2}>
+        {stats.map((stat, i) => (
+          <Grid item xs={6} key={i}>
+            <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
               <CardContent sx={{ p: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                  <Box sx={{ mr: 1 }}>
-                    {stat.icon}
-                  </Box>
-                  <Typography color="textSecondary" variant="caption" sx={{ fontSize: '0.75rem' }}>
+                <Box display="flex" alignItems="center" gap={1} mb={0.5}>
+                  {stat.icon}
+                  <Typography fontSize="0.7rem" color="text.secondary">
                     {stat.title}
                   </Typography>
                 </Box>
-                <Typography variant="h6" sx={{ color: `${stat.color}.main`, fontSize: '1.25rem' }}>
+                <Typography fontWeight={600}>
                   {stat.value}
                 </Typography>
               </CardContent>
@@ -128,107 +104,55 @@ const Dashboard = () => {
           </Grid>
         ))}
       </Grid>
-      
-      {/* Quick Actions */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="subtitle1" gutterBottom>
-          Quick Actions
-        </Typography>
+
+      <Paper elevation={0} sx={{ p: 1.5, border: '1px solid', borderColor: 'divider' }}>
         <Grid container spacing={1}>
           <Grid item xs={6}>
             <Button
               fullWidth
-              variant="contained"
               size="small"
-              startIcon={<AttachMoney sx={{ fontSize: 18 }} />}
-              onClick={() => handleNavigation('/finance')}
+              variant="contained"
+              startIcon={<AttachMoney />}
+              onClick={() => handleNavigate('/finance')}
             >
-              Add Transaction
+              Add
             </Button>
           </Grid>
           <Grid item xs={6}>
             <Button
               fullWidth
-              variant="contained"
               size="small"
-              startIcon={<Campaign sx={{ fontSize: 18 }} />}
-              onClick={() => handleNavigation('/promotions')}
+              variant="contained"
+              startIcon={<Campaign />}
+              onClick={() => handleNavigate('/promotions')}
             >
-              New Promotion
+              Promote
             </Button>
           </Grid>
         </Grid>
       </Paper>
-      
-      <Grid container spacing={2}>
-        {/* Recent Transactions */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle1">
-                Recent Transactions
-              </Typography>
-              <Button
-                size="small"
-                onClick={() => handleNavigation('/finance')}
-              >
-                View All
-              </Button>
-            </Box>
-            {transactions.length > 0 ? (
-              <TransactionList transactions={transactions.slice(0, 3)} compact />
-            ) : (
-              <Box sx={{ p: 2, textAlign: 'center' }}>
-                <Typography color="textSecondary" variant="caption">
-                  No recent transactions
-                </Typography>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => handleNavigation('/finance')}
-                  sx={{ mt: 0.5 }}
-                >
-                  Add Transaction
-                </Button>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-        
-        {/* Active Promotions */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Typography variant="subtitle1">
-                Active Promotions
-              </Typography>
-              <Button
-                size="small"
-                onClick={() => handleNavigation('/promotions')}
-              >
-                View All
-              </Button>
-            </Box>
-            {activePromotions.length > 0 ? (
-              <PromotionList promotions={activePromotions.slice(0, 2)} compact />
-            ) : (
-              <Box sx={{ p: 2, textAlign: 'center' }}>
-                <Typography color="textSecondary" variant="caption">
-                  No active promotions
-                </Typography>
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={() => handleNavigation('/promotions')}
-                  sx={{ mt: 0.5 }}
-                >
-                  Create Promotion
-                </Button>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
+
+      <Box mt={2}>
+        <Typography fontSize="0.9rem" mb={1}>
+          Recent Transactions
+        </Typography>
+        {financeLoading ? (
+          <Skeleton height={80} />
+        ) : (
+          <TransactionList transactions={transactions.slice(0, 3)} compact />
+        )}
+      </Box>
+
+      <Box mt={2}>
+        <Typography fontSize="0.9rem" mb={1}>
+          Active Promotions
+        </Typography>
+        {promoLoading ? (
+          <Skeleton height={80} />
+        ) : (
+          <PromotionList promotions={activePromotions.slice(0, 2)} compact />
+        )}
+      </Box>
     </Box>
   );
 };

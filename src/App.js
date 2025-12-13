@@ -4,6 +4,9 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
@@ -16,7 +19,6 @@ import useTelegram from './hooks/useTelegram';
 const App = () => {
   const { theme: telegramTheme, isLoading } = useTelegram();
 
-  // Create theme based on Telegram theme
   const theme = createTheme({
     palette: {
       mode: telegramTheme === 'dark' ? 'dark' : 'light',
@@ -32,18 +34,29 @@ const App = () => {
       },
     },
     shape: {
-      borderRadius: 12,
+      borderRadius: 10,
     },
     typography: {
       fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-      h5: {
-        fontWeight: 600,
-      },
-      h6: {
-        fontWeight: 600,
-      },
+      h6: { fontWeight: 600 },
     },
     components: {
+      MuiCard: {
+        styleOverrides: {
+          root: {
+            boxShadow: 'none',
+            border: '1px solid',
+            borderColor: 'divider',
+          },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            boxShadow: 'none',
+          },
+        },
+      },
       MuiButton: {
         styleOverrides: {
           root: {
@@ -52,62 +65,26 @@ const App = () => {
           },
         },
       },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-            boxShadow: telegramTheme === 'dark' 
-              ? '0 4px 20px rgba(0, 0, 0, 0.3)'
-              : '0 4px 20px rgba(0, 0, 0, 0.08)',
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-          },
-        },
-      },
     },
   });
 
   if (isLoading) {
     return (
-      <div style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '100vh',
-        backgroundColor: telegramTheme === 'dark' ? '#18222d' : '#f5f5f5'
-      }}>
-        <div style={{
-          textAlign: 'center',
-          padding: '20px'
-        }}>
-          <div style={{
-            width: '50px',
-            height: '50px',
-            border: '3px solid #6a5af9',
-            borderTopColor: 'transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite',
-            margin: '0 auto 20px'
-          }} />
-          <p style={{
-            color: telegramTheme === 'dark' ? '#ffffff' : '#212121',
-            fontSize: '16px'
-          }}>
-            Loading Business ERP...
-          </p>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </div>
+      <Box
+        sx={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          bgcolor: theme.palette.background.default,
+        }}
+      >
+        <CircularProgress size={36} />
+        <Typography mt={2} fontSize="0.9rem">
+          Loading…
+        </Typography>
+      </Box>
     );
   }
 
